@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multi-Series Economic Chart</title>
+
+    <!-- TradingView Lightweight Charts library (use CDN or download/host) -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+
+    <style>
+        /* Basic reset */
+        body,
+        html {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #f8f8f8;
+            /* Light background for the page */
+            color: #333;
+        }
+
+        /* Controls container styling */
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            /* Allow controls to wrap on smaller screens */
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #ffffff;
+            /* White background for controls */
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 5px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            /* Subtle shadow */
+        }
+
+        /* Grouping for related controls */
+        .control-group {
+            margin-right: 20px;
+            margin-bottom: 10px;
+            /* Spacing when wrapping */
+            display: flex;
+            align-items: center;
+            /* Align items vertically */
+        }
+
+        /* Styling for labels and inputs */
+        .controls label {
+            margin-right: 5px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .controls input[type="text"],
+        .controls input[type="date"],
+        .controls select {
+            padding: 6px 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 0.9em;
+            margin-right: 5px;
+            /* Space between input and next label/button */
+        }
+
+        .controls button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            background-color: #007bff;
+            /* Blue button */
+            color: white;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s ease;
+        }
+
+        .controls button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Styling for the list of active series */
+        .active-series-list {
+            border-top: 1px solid #ddd;
+            padding-top: 10px;
+            margin-top: 10px;
+            /* Space above the list */
+            width: 100%;
+            /* Take full width in controls */
+            font-size: 0.9em;
+        }
+
+        .active-series-list strong {
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .active-series-item {
+            margin-bottom: 5px;
+            padding: 3px 0;
+            display: flex;
+            /* Align items in the list */
+            align-items: center;
+        }
+
+        .active-series-item span:first-child {
+            /* Color square */
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            margin-right: 8px;
+            border: 1px solid #ccc;
+            /* Optional border */
+        }
+
+        .remove-btn {
+            margin-left: 15px;
+            /* More space for the remove button */
+            cursor: pointer;
+            color: #dc3545;
+            /* Red color for remove */
+            font-weight: bold;
+            font-size: 1.1em;
+            padding: 0 5px;
+            /* Easier to click */
+        }
+
+        .remove-btn:hover {
+            color: #a71d2a;
+        }
+
+
+        /* Styling for chart containers */
+        .chart-section {
+            width: 95%;
+            /* Responsive width */
+            max-width: 1400px;
+            /* Max width */
+            margin: 15px auto;
+            /* Centering and vertical spacing */
+            position: relative;
+            /* For absolute positioning of loading indicator */
+            background-color: #ffffff;
+            /* White background for charts */
+            border: 1px solid #ddd;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        #price-chart-container {
+            height: 450px;
+            /* Adjust main chart height */
+        }
+
+        #return-chart-container {
+            height: 150px;
+            /* Adjust return chart height */
+        }
+
+        /* Loading Indicator */
+        .loading-indicator {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.2em;
+            color: #888;
+            background-color: rgba(255, 255, 255, 0.8);
+            /* Semi-transparent background */
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            /* Hidden by default */
+            z-index: 10;
+            /* Ensure it's above chart elements during load */
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="controls">
+        <!-- Group for adding new series -->
+        <div class="control-group">
+            <label for="dataType">Type:</label>
+            <select id="dataType">
+                <option value="stock" selected>Stock</option>
+                <option value="fx">FX Rate</option>
+                <!-- Add other types as needed -->
+                <!-- <option value="loan">Loan Sector</option> -->
+            </select>
+            <label for="dataCode">Code/ID:</label>
+            <input type="text" id="dataCode" placeholder="e.g., 1155 or USD">
+            <button id="addButton" title="Add selected series to charts">Add Series</button>
+        </div>
+
+        <!-- Group for date range and reloading -->
+        <div class="control-group">
+            <label for="startDate">Start:</label>
+            <input type="date" id="startDate">
+            <label for="endDate">End:</label>
+            <input type="date" id="endDate">
+            <button id="reloadButton" title="Reload data for all active series">Reload All</button>
+        </div>
+
+        <!-- Display area for currently active series -->
+        <div class="control-group active-series-list" id="activeSeriesList">
+            <strong>Active Series:</strong><br>
+            <i>None added yet.</i>
+            <!-- Active series will be dynamically added here by JS -->
+        </div>
+        <!-- NEW: Display area for statistics like correlation -->
+        <div class="control-group" id="statsDisplay" style="margin-left: 20px; font-size: 0.9em;">
+            <!-- Correlation will be dynamically added here by JS -->
+        </div>
+    </div>
+
+    <!-- Container for Main Price/Value Chart -->
+    <div id="price-chart-container" class="chart-section">
+        <div class="loading-indicator">Loading...</div> <!-- Loading indicator specific to this chart -->
+    </div>
+
+    <!-- Container for Secondary Total Return Chart -->
+    <div id="return-chart-container" class="chart-section">
+        <div class="loading-indicator"></div> <!-- Loading indicator specific to this chart -->
+    </div>
+
+    <div id="custom-tooltip"
+        style="position: absolute; display: none; padding: 8px; background-color: white; border: 1px solid #ccc; border-radius: 4px; font-size: 12px; z-index: 1000; pointer-events: none; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);">
+        <!-- Content will be set by JavaScript -->
+    </div>
+
+    <!-- Link to your JavaScript file -->
+    <script src="chart.js"></script>
+
+</body>
+
+</html>

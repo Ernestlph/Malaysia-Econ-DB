@@ -1,8 +1,22 @@
+# sqlc.yaml
 version: "2"
 sql:
-  - schema: "sql/schema"
-    queries: "sql/queries"
-    engine: "postgresql"
+  - engine: "postgresql"
+    # Ensure these paths are correct
+    queries: "./sql/queries/" # Example path for query files
+    schema: "./sql/schema/"  # Example path for schema migration files
     gen:
       go:
+        package: "database"
         out: "internal/database"
+        overrides:
+          - db_type: "numeric"
+            go_type: "float64"
+          - db_type: "decimal"
+            go_type: "float64"
+          # Add override for timestamp with time zone if needed (often pgtype.Timestamptz is fine)
+          # - db_type: "timestamptz"
+          #   go_type: "time.Time"
+          # Add override for UUID if needed (often pgtype.UUID is fine)
+          # - db_type: "uuid"
+          #   go_type: "github.com/google/uuid.UUID"

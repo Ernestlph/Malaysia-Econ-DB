@@ -5,11 +5,60 @@
 package database
 
 import (
+	"database/sql"
 	"time"
-	
 
 	"github.com/google/uuid"
 )
+
+// Stores profile information for companies listed on stock exchanges.
+type Company struct {
+	// The unique stock code/ticker symbol (e.g., "1155" for Maybank).
+	StockCode string
+	// The full official name of the company.
+	CompanyName string
+	// The country code where the company is primarily listed or operates (e.g., MY).
+	CountryCode sql.NullString
+	// The primary economic sector of the company.
+	Sector sql.NullString
+	// A more specific subsector or industry classification.
+	Subsector sql.NullString
+	// The date the company was listed on the stock exchange.
+	ListingDate sql.NullTime
+	// The URL from which the profile information was last scraped.
+	ProfileSourceUrl sql.NullString
+	// Timestamp of the last successful profile data scrape for this company.
+	ProfileLastScrapedAt sql.NullTime
+	// Timestamp when this company record was first created in the database.
+	CreatedAt time.Time
+	// Timestamp when this company record was last modified.
+	UpdatedAt time.Time
+}
+
+// Stores daily closing stock prices scraped from sources like i3investor.
+type DailyStockPrice struct {
+	ID int32
+	// The stock code/symbol (e.g., from KLSE).
+	StockCode string
+	// The date for which the closing price applies.
+	PriceDate time.Time
+	// The closing stock price.
+	ClosingPrice string
+	// The specific URL the data was scraped from for this entry.
+	SourceUrl sql.NullString
+	// Timestamp indicating when this row was added or last updated.
+	ExtractedAt time.Time
+}
+
+type ForeignExchange struct {
+	ID           uuid.UUID
+	CurrencyCode string
+	BuyingRate   string
+	SellingRate  string
+	MiddleRate   string
+	CreatedAt    time.Time
+	Date         time.Time
+}
 
 type User struct {
 	ID             uuid.UUID
